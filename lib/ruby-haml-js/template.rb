@@ -30,22 +30,15 @@ module RubyHamlJs
     private
 
     def compile_to_function
+      args = [data, {
+        escapeHtmlByDefault: false, 
+        customEscape: self.class.custom_escape || false
+      }]
       function = ExecJS.
         compile(self.class.haml_source).
-        eval "Haml('#{js_string data}', {escapeHtmlByDefault: true, customEscape: #{js_custom_escape}}).toString()"
+        eval "Haml.apply(this, #{::JSON.generate(args)}).toString()"
       # make sure function is annonymous
       function.sub /function \w+/, "function "
-    end
-
-    def js_string str
-      (str || '').
-        gsub("'")  {|m| "\\'" }.
-        gsub("\n") {|m| "\\n" }
-    end
-
-    def js_custom_escape
-      escape_function = self.class.custom_escape
-      escape_function ? "'#{js_string escape_function}'" : 'null'
     end
 
     class << self
